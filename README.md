@@ -1,6 +1,6 @@
 <h1 align="center">
   <br>
-  <img src="https://github.com/odoo/odoo-vscode/blob/main/images/odoo_logo.png?raw=true"></a>
+  <img src="https://github.com/odoo/odoo-vscode/blob/release/images/odoo_logo.png?raw=true"></a>
   <br>
   Odoo Zed Extension
   <br>

@@ -1,6 +1,6 @@
 id = "odoo"
 name = "Odoo"
-version = "0.12.1"
+version = "1.0.1"
 schema_version = 1
 authors = ["Odoo<help@odoo.com>"]
 description = "This extension integrates the Odoo Language Server, that will help you in the development of your Odoo projects."

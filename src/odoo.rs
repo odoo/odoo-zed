@@ -95,7 +95,7 @@ impl Odoo {
     fn platform() -> &'static str {
         let (platform, arch) = zed::current_platform();
         match (platform, arch) {
-            (zed::Os::Linux, zed::Architecture::X8664) if cfg!(target_env = "musl") => "alpine-x64",
+            (zed::Os::Linux, zed::Architecture::X8664) if cfg!(target_env = "musl") => "alpine-x64", // TODO it will never find musl as target_env will always be "" at compilation. Check ldd?
             (zed::Os::Linux, zed::Architecture::Aarch64) if cfg!(target_env = "musl") => "alpine-arm64",
             (zed::Os::Linux, zed::Architecture::X8664) => "linux-x64",
             (zed::Os::Linux, zed::Architecture::Aarch64) => "linux-arm64",
