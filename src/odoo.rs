@@ -35,7 +35,8 @@ impl Odoo {
             VERSION,
         )?;
 
-        let asset_name = format!("odoo-{}-{}.zip", Odoo::platform(), VERSION);
+        let (platform, extension) = Odoo::platform();
+        let asset_name = format!("odoo-{}-{}.{}", platform, VERSION, extension);
 
         let asset = release.assets.iter().find(|asset| asset.name == asset_name).ok_or_else(
             || format!("Odoo: No asset found for asset name {}", asset_name)
@@ -92,21 +93,21 @@ impl Odoo {
         Ok(binary_path)
     }
 
-    fn platform() -> &'static str {
+    fn platform() -> (&'static str, &'static str) {
         let (platform, arch) = zed::current_platform();
         match (platform, arch) {
-            (zed::Os::Linux, zed::Architecture::X8664) if cfg!(target_env = "musl") => "alpine-x64", // TODO it will never find musl as target_env will always be "" at compilation. Check ldd?
-            (zed::Os::Linux, zed::Architecture::Aarch64) if cfg!(target_env = "musl") => "alpine-arm64",
-            (zed::Os::Linux, zed::Architecture::X8664) => "linux-x64",
-            (zed::Os::Linux, zed::Architecture::Aarch64) => "linux-arm64",
-            (zed::Os::Windows, zed::Architecture::X8664) => "win32-x64",
-            (zed::Os::Windows, zed::Architecture::Aarch64) => "win32-arm64",
-            (zed::Os::Mac, zed::Architecture::X8664) => "darwin-x64",
-            (zed::Os::Mac, zed::Architecture::Aarch64) => "darwin-arm64",
+            (zed::Os::Linux, zed::Architecture::X8664) if cfg!(target_env = "musl") => ("alpine-x64", "tar.gz"), // TODO it will never find musl as target_env will always be "" at compilation. Check ldd?
+            (zed::Os::Linux, zed::Architecture::Aarch64) if cfg!(target_env = "musl") => ("alpine-aarch64", "tar.gz"),
+            (zed::Os::Linux, zed::Architecture::X8664) => ("linux-x64", "tar.gz"),
+            (zed::Os::Linux, zed::Architecture::Aarch64) => ("linux-aarch64", "tar.gz"),
+            (zed::Os::Windows, zed::Architecture::X8664) => ("win32-x64", "zip"),
+            (zed::Os::Windows, zed::Architecture::Aarch64) => ("win32-aarch64", "zip"),
+            (zed::Os::Mac, zed::Architecture::X8664) => ("darwin-x64", "tar.gz"),
+            (zed::Os::Mac, zed::Architecture::Aarch64) => ("darwin-aarch64", "tar.gz"),
             (_os, arch) => {
                 // fallback
                 println!("Odoo: Warning: Unsupported platform {platform:?}-{arch:?}");
-                Box::leak(format!("unknown").into_boxed_str())
+                (Box::leak(format!("unknown").into_boxed_str()), "tar.gz")
             }
         }
     }
