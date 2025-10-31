@@ -70,7 +70,13 @@ impl Odoo {
                 fs::remove_dir_all(path_typeshed)?;
             }
 
-            zed::download_file(&asset.download_url, &version_dir, zed::DownloadedFileType::Zip)
+            let file_type = match extension {
+                "zip" => zed::DownloadedFileType::Zip,
+                "tar.gz" => zed::DownloadedFileType::GzipTar,
+                other => return Err(format!("unsupported archive type: {}", other).into()),
+            };
+
+            zed::download_file(&asset.download_url, &version_dir, file_type)
                 .map_err(|err| format!("failed to download file: {err}"))?;
 
             zed::download_file(&asset_typeshed.download_url, &version_dir, zed::DownloadedFileType::Zip)
