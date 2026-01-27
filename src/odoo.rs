@@ -79,8 +79,16 @@ impl Odoo {
             zed::download_file(&asset.download_url, &version_dir, file_type)
                 .map_err(|err| format!("failed to download file: {err}"))?;
 
-            zed::download_file(&asset_typeshed.download_url, &version_dir, zed::DownloadedFileType::Zip)
-                .map_err(|err| format!("failed to download file: {err}"))?;
+            let type_shed_path = Path::new(&version_dir).join("typeshed");
+            zed::download_file(
+                &asset_typeshed.download_url,
+                type_shed_path.to_str().ok_or(format!(
+                    "Invalid typeshed path ({})",
+                    type_shed_path.display()
+                ))?,
+                zed::DownloadedFileType::Zip,
+            )
+            .map_err(|err| format!("failed to download file: {err}"))?;
 
             zed::make_file_executable(&binary_path)?;
 
