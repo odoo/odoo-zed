@@ -16,18 +16,19 @@ This repository contains the code that build the Zed extension for OdooLS. OdooL
 
 ## Settings
 
-You can provide settings to the plugin:
+You can provide settings to the plugin by setting arguments
 
 ```json
   "lsp": {
     "odoo": {
-      "settings": {
-        "Odoo": {
-          "selectedProfile": "my_profile"
-        }
-      }
-    }
-  }
+      "binary": {
+        "arguments": [
+          "--config-path=CONFIG_PATH",
+          "--selected-config=SELECTED_CONFIG" // For OdooLS >= 1.3.0
+          ],
+      },
+    },
+  },
 ```
 
 ## Limitations
