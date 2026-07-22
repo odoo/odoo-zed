@@ -47,7 +47,7 @@ impl Odoo {
         )?;
 
         let mut exe_name = String::from("odoo_ls_server");
-        if cfg!(windows) {
+        if zed::current_platform().0 == zed::Os::Windows {
             exe_name += ".exe";
         }
 
@@ -110,8 +110,6 @@ impl Odoo {
     fn platform() -> (&'static str, &'static str) {
         let (platform, arch) = zed::current_platform();
         match (platform, arch) {
-            (zed::Os::Linux, zed::Architecture::X8664) if cfg!(target_env = "musl") => ("alpine-x86_64", "tar.gz"), // TODO it will never find musl as target_env will always be "" at compilation. Check ldd?
-            (zed::Os::Linux, zed::Architecture::Aarch64) if cfg!(target_env = "musl") => ("alpine-aarch64", "tar.gz"),
             (zed::Os::Linux, zed::Architecture::X8664) => ("linux-x86_64", "tar.gz"),
             (zed::Os::Linux, zed::Architecture::Aarch64) => ("linux-aarch64", "tar.gz"),
             (zed::Os::Windows, zed::Architecture::X8664) => ("win32-x86_64", "zip"),
