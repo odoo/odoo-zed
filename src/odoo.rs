@@ -46,11 +46,6 @@ impl Odoo {
             || format!("Odoo: No asset found for asset name {}", "typeshed.zip")
         )?;
 
-        let mut exe_name = String::from("odoo_ls_server");
-        if zed::current_platform().0 == zed::Os::Windows {
-            exe_name += ".exe";
-        }
-
         let binary_path = format!(
             "{version_dir}/{bin_name}",
             bin_name = match zed::current_platform().0 {
