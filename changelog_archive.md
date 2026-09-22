@@ -1,5 +1,156 @@
 # Changelog Archive
 
+## [1.5.2] - 2026/08/27 - Fixes
+
+### Server
+
+- Handle special characters ' ', '"', '#', '%', '<', '>', '?', '[', ']', '^', '`', '{', '}', '|', '\\\\' in file URLs
+- Semantic tokens can now be disabled in configuration with `disable_semantic_tokens_X = true`, with X in `[python, javascript, xml]`
+- Fix and bring back OLS05001 in Xml fields references - `Unknown XML ID`
+- Small refactoring of BuildSteps and SymbolKey replacement to improve stability by removing possible invalid states
+- Windows builds now include line tables for better tracebacks in case of crash
+- Add a warning diagnostic for calls to attributes that are not in dependencies
+- GoTo features now select only the headers of classes and functions range. It allows us to bring back the default feature that call gotoreference instead of gotodefinition when clicking on the definition of the symbol
+
+### VsCode
+
+- Notification that suggests disabling the built-in JavaScript plugin will now only be displayed if tsserver is configured and activated
+
+### Fixes
+
+- Fix issues with compiled Python files.
+- Warning about missing tsserver now suggests typescript@6 instead of typescript
+- Fix diagnostic OLS05071 that was activating on t-name that contains a dot, which is valid
+- Fix various hooks in ORM that could stop working after edits
+- Fix cycle prevention in reference evaluation that was incorrectly preventing some valid results due to a different context.
+- Fix crash on JavaScript file validation that can happen if AST is not ready or has been dropped
+- Ensure that diagnostics are properly cleared when rebuilding an AST
+- Fix useless custom entrypoint creation on files that were not opened by the user but modified on disk
+- Fix internal file versioning for file info updates of opened files
+- Fix range of hook on IrRule to apply only to Odoo < 19.4
+- Fix panic on invalid syntax with missing type annotation in tuple assignment, like `a, b: int`
+- Fix panic when calling super with an invalid argument like None
+
+## [1.5.1] - 2026/07/30 - Day-1 Fixes
+
+### Server
+
+- Improve unpacking evaluations, resolving code like `for a, b in [(1, 2), (2, 3)]`. `a` and `b` will now properly be evaluated as `int`
+- Remove logs that were created on each string occurence of opened files.
+- Configuration files that now contains invalid key or syntax errors will be reported in VsCode.
+- Update gungraun to 0.19.4
+- Various code style enhancements
+
+### Fixes
+
+- Fix some missing references in the GoToReferences features (all references found in functions)
+- Fix crash that occur on files that does not contain valid UTF-8
+- Fix crash on invalid cycling evaluations.
+- Fix Goto location when going on a python package
+- Fix default config selection on non-odoo related workspace
+- Fix Javascript internal dependency if the file is not part of the project
+
+## [1.5.0] - 2026/07/22 - JavaScript and performance
+
+This new update lays the foundation for support for JavaScript, OWL, and templates. OdooLS now uses OXC internally to parse and read JavaScript files, and requires you to install tsserver to provide all other features. It works by creating an internal project with a dynamic `tsconfig.json` that is served to tsserver, depending on your project configuration.
+
+This update also introduces a major refactor of the project, especially its memory management, leading to more than a 60 % performance improvement (mostly on loading time) and additional 25 % memory savings. We moved from storing references in `Rc<RefCell<>>` to an arena. This provides better performance, a better memory layout, and better use of the Rust borrow checker. With these checks done at compile time, there will be fewer runtime crashes.
+
+### JavaScript key information
+
+- Introduced features: 
+  - Javascript files: GotoDefinition, hover, completion, references, semantic tokens, document symbols, workspace symbols. All these features are able to resolve @module imports.
+  - Templates and components are linked, and you can naviguate from one to the other by doing a gotodefinition on the template name or the component `template` attribute.
+  - Javascript code in XML templates files are now evaluated, activating all features for these pieces of code.
+- To use tsserver, you must install it first. It is not bundled with the extension. You can install it globally (`npm install -g typescript6`) or install it another way and provide the path/command OdooLS should use through the `tsserver_command` option in your config file.
+- You can disable the JavaScript feature with the `disable_javascript` option in your config file.
+- You can enable TypeScript diagnostics in JavaScript files by setting `ts_check: true` in your config file (equivalent to `checkJS` in a `jsconfig.json` or `tsconfig.json`). It is also equivalent to a `@ts-check` at the top of a .js file.
+- Autocompletion in XML files is currently not working in PyCharm, as it seems to prevent the LSP from working in these files. We are trying to find a solution.
+- Please note that this is a pre-release version. Feel free to send us any feedback. This version is still based on TypeScript 6, but Microsoft has just released TypeScript 7 (written in Go). Be sure to install TypeScript 6 for now (we will move to TypeScript 7 in the future).
+
+### Server
+
+- Use OXC and tsserver to provide features for JavaScript files, as well as OWL templates.
+- Provide semantic tokens for Python, XML and JS files.
+- Store all symbols in an arena, and stop using `Rc<RefCell<>>` to store references.
+    - Add GDB scripts to help debug this new memory management
+- Switch the internal hasher from SipHash to FxHash for performance.
+- Set `codegen-units` to `1` in release builds to improve runtime performance, at the cost of slower compilation.
+- On Linux/macOS, switch the memory allocator to jemalloc.
+- Support for the new `access` operator in search domains for Odoo >= 19.4
+- Refactor the entire config parser to make adding new options easier in the future.
+- Report loading progress as a percentage instead of number of items during initial loading.
+- Lots of various optimizations.
+
+### VsCode
+
+- Display configuration errors to draw user attention to invalid settings.
+- Add a popup that strongly suggests disabling the built-in JS plugin in VS Code for your workspace. It will avoid having 2 instances of tsserver running serving the same answers to your requests.
+
+### Fixes
+
+- The server could sometimes get stuck in a state that consumed 100% CPU until the next request (typing, hover, etc.).
+- Remove duplicate references found on the same line in XML files.
+
+## [1.4.0] - 2026/07/22 - Go to References
+
+This update is refactoring the way "Goto" features are working, as well as adding the new Go to References feature.
+
+### Server
+
+- Change gotoDefinition to pass through imports until the true definition of the symbol
+- Add GoToDeclaration that goes to the first declaration or assignation found for a symbol
+- Add GoToReferences that will search for all usage of a symbol. Available in python, xml, csv and `__manifest__.py` files.
+- Implement all these gotos features in CSV files.
+- Load and validate `asset` nodes in XML files.
+- Validation of language codes used in XML files.
+- Add a new option in configuration files: "additional_languages", allowing you to add languages that would not be added in data files.
+- Server will not close anymore if multiple workspace folders has the same name. However, it will still be impossible to reference one of them in a configuration.
+- Handle lambda expressions.
+- Add evaluation for `request` and `request.env` in controllers.
+- Validation of `assets` values in `__manifest__.py`
+- Improve the `self` evaluation to be able to propagate it to class children or overrides.
+- Add the list of folders to the documentation when hovering a symbol representing a python namespace
+- CLI mode is now loading configurations like the normal process is doing, making the profiles available in this mode.
+- Add a new argument to the command line: `selected_config` allowing you to manually select a profile when running in CLI mode.
+- Various performances update (HashMap without hashing function for integer keys, better filesystem access on windows)
+- Upgrade Rust to 1.94, Ruff to 0.15.0
+- When working with command line (`--parse` option), the parameter `tracked-folders` is now mandatory, as not providing it would lead to unclear results
+- dynamic variables (`${workspaceFolder}`, ...) can now be used in the `additional_stubs` and `stdlib` option in toml config files.
+- Add OLS OLS01011 indicating that a positional-only argument is passed with keyword arguments
+- Add the OLS05069 and OLS05070 diagnostics, related to CSV records parsing.
+- Add the operator "access" to domain operators, added in Odoo 19.3
+
+### VsCode
+
+- Fix a crash by preventing the plugin to try to start OdooLS if "disabled" profile is selected
+- Update the welcome page links to the wiki
+- [packaging] Improve package dependencies management
+- [packaging] remove axios and untildify dependency and update other packages
+
+### Fixes
+
+- Fixed a deadlock that could occur during startup.
+- Fix wrong diagnostic OLS01010 indicating that keyword arguments are missing, if `**kwargs` is provided in the call
+- Correctly handle files and modules that are opened but for which the creation has not been detected (because of moving from outside the workspace for example)
+- Improve the conversion of uri of workspace folders (more specifically tracked-folders)
+- Fix the parsing of csv records, especially when quotes are present
+- Avoid raising errors during shutdown. This should remove crash notification that can happen when the server is reloading, usually during git branch switches.
+- Fix the trimming of .py and .pyi for the paths from config files. Only file extension is now stripped, not any occurence of .py(i)
+- Fix GoTo features when used on a xml record stored in a python file (model_xxx ones for example)
+- Fix borrow error in some evaluation of `self.env.ref` function
+- Fix crash on imports in custom entrypoints with relative folders. A proper implementation will come later.
+- Fix wrong diagnostics about positional-only arguments to functions
+- Fix crash with cache poisoning when file is edited during validation
+- Fix duplication of file cache update
+- Fix some relative import errors in no-odoo mode
+
+### Fixes not included in previous 1.3.3
+
+- Fix crash on some cyclic rebuild jobs
+- Fix progression indicator never ending on PyCharm
+- OLS03023 was wrongly raised on fields that inherit an abstract model
+
 ## [1.3.3] - 2026/06/17 - release candidate 2
 
 ### VsCode
