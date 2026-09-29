@@ -8,10 +8,12 @@ repository = "https://github.com/odoo/odoo-zed"
 
 [language_servers.odoo]
 name = "Odoo"
-languages = ["Python", "HTML", "XML", "CSV"]
+languages = ["Python", "HTML", "XML", "CSV", "JavaScript", "TypeScript"]
 
 [language-servers.odoo.language_ids]
 "Python" = "python"
 "HTML" = "html"
-"CSS" = "css"
+"CSV" = "csv"
+"JavaScript" = "javascript"
+"TypeScript" = "typescript"
 "XML" = "xml"
